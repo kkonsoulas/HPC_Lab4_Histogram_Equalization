@@ -23,6 +23,9 @@ diff: gHist hist
 	./hist uth.pgm cuth.out
 	diff cuth.out guth.out
 
+planet:
+	./gHist ../Images/planet_surface.pgm planet_surface.gpu
+	./hist ../Images/planet_surface.pgm planet_surface.cpu
 
 clean:
 	rm *.o

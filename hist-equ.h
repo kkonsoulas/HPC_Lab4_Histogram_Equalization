@@ -13,11 +13,15 @@
  }                                                                 \
 }
 #define BLOCK_SIZE 1024
+#define CONSTANT_MEMORY_SIZE (8388608 )
+// #define CONSTANT_MEMORY_GRID (CONSTANT_MEMORY_SIZE / BLOCK_SIZE)
+#define CONSTANT_MEMORY_GRID (8192)
+
 
 void __global__ histogram(int * hist_out, unsigned char * img_in, int img_size, int nbr_bin);
 void __global__ histogram_equalization(unsigned char * img_out, unsigned char * img_in, 
                             int * hist_in, int img_size, int nbr_bin);
-void __global__ histogram_prefixsum(int * hist_in,int * cdf,int nbr_bin,int img_size);
+void __global__ histogram_prefixsum(int * hist_in,int * cdf,int nbr_bin,int img_size,int TypeofAlgo);
 void __global__ histogram_calcdf(int * cdf,int * lut , int img_size);
 
 
