@@ -13,6 +13,10 @@ PGM_IMG contrast_enhancement_g(PGM_IMG img_in)
     cudaCheckError();
     dim3 block_dim , grid_dim;
     int img_size = img_in.w  *img_in.h;
+    int* cdf;
+    cudaError = cudaMalloc((void**) &cdf,256 * sizeof(int));
+    int* lut;
+    cudaError = cudaMalloc((void**) &lut,256 * sizeof(int));
     
     //image larger than a block
     if(img_size > BLOCK_SIZE){
@@ -52,10 +56,20 @@ PGM_IMG contrast_enhancement_g(PGM_IMG img_in)
     cudaMemset(d_hist,0,sizeof(int)*256);
     cudaCheckError();
     histogram<<<grid_dim,block_dim>>>(d_hist, img_in.img, img_in.h * img_in.w, 256);
-    // cudaCheckError();
+    
+    //----WORKING-CODE------//
     cudaDeviceSynchronize();
     cudaCheckError();
-    histogram_equalization<<<grid_dim,block_dim>>>(result.img ,img_in.img ,d_hist ,result.w*result.h , 256);
+    histogram_prefixsum<<< 1, 256>>>(d_hist,cdf,256,  img_in.h * img_in.w);
+    cudaDeviceSynchronize();
+    cudaCheckError();
+    histogram_calcdf<<< 1 , 256 >>>(cdf,lut,img_in.h * img_in.w);
+    cudaCheckError();
+    //-----------------------//
+
+    cudaDeviceSynchronize();
+    cudaCheckError();
+    histogram_equalization<<<grid_dim,block_dim>>>(result.img ,img_in.img ,lut,result.w*result.h , 256);
     
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
@@ -63,6 +77,6 @@ PGM_IMG contrast_enhancement_g(PGM_IMG img_in)
     //timer
     cudaCheckError();
 
-    printf("Elapsed time in GPU:  %3.20f ms \n", time);
+    printf("Elapsed time in GPU:  %3.12f ms \n", time);
     return result;
 }

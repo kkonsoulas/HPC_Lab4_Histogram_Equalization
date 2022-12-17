@@ -34,66 +34,119 @@ __global__ void histogram(int * hist_out, unsigned char * img_in, int img_size, 
 }
 
 
-__global__ void histogram_equalization(unsigned char * img_out, unsigned char * img_in, 
-							int * hist_in, int img_size, int nbr_bin){
+//  __global__ void histogram_equalization(unsigned char * img_out, unsigned char * img_in, 
+//  							int * hist_in, int img_size, int nbr_bin,int * cdf,int * lut)
+// {
 	
 	
-	// int *lut; 
-	// cudaMalloc(&lut,sizeof(int)*nbr_bin);            
-	// if(i == 0)
-	// 	hist_in[20000] =400;
-	// cdf = 0;
-	int i = threadIdx.x + blockIdx.x * blockDim.x;
-	if(i >= img_size)
-		return;
+//  	 //int *lut; 
+//  	 //cudaMalloc(&lut,sizeof(int)*nbr_bin);            
+//  	 //if(i == 0)
+//  	 //	hist_in[20000] =400;
+//  	 //cdf = 0;
+//  	int i = threadIdx.x + blockIdx.x * blockDim.x;
+//  	if(i >= img_size)
+//  		return;
 
-	int d=0;
-   	__shared__ int lut[BIN_SIZE];
-	__shared__ int min;
-	__shared__ int cdf[BIN_SIZE];
+//  	int d=0;
+// 	int min;
+//  	//__shared__ int lut[BIN_SIZE];
+//  	__shared__ int scanning[BIN_SIZE];
 
-	/* Construct the LUT by calculating the CDF */
-	// d = 0;
-	min = 0;
+//  	/* Construct the LUT by calculating the CDF */
 
-	// //major unoptimised code
+//  	//major unoptimised code
 	
-	if(threadIdx.x == 0){
-		while(min == 0){
-			min = hist_in[d++];
-		}
+//  	/*if(threadIdx.x == 0){
+//  		while(min == 0){
+//  			min = hist_in[d++];
+//  		}
 		
-	}
-	__syncthreads();
-	d = img_size - min;
+//  	}
+//  	__syncthreads();
+//  	d = img_size - min;
+// 	*/
+
+//  	//Parallel scan 
+//  	if(i < nbr_bin)
+//  		scanning[threadIdx.x] = hist_in[threadIdx.x];
+//  	unsigned int stride;
+//  	for(stride = 1; stride < blockIdx.x; stride *= 2){
+//  		__syncthreads();
+ 		
+//  		if (stride <= threadIdx.x)
+//  			scanning[threadIdx.x] += scanning[threadIdx.x - stride];
+ 		
+//  	}
+
+//  	__syncthreads(); 
+// 	for(int k=0; k < nbr_bin; k++){
+// 		cdf[k] = scanning[k];
+// 	}
+//  	/*if(stride <= threadIdx.x)
+//  		cdf[threadIdx.x] += temp;
+//  	}*/
 	
+	
+// 		min = cdf[0];
+// 		d = min - img_size;
+		
+// 		lut[threadIdx.x] = (int)(((float)cdf[threadIdx.x] - min)*255/d + 0.5);
+// 		if(lut[threadIdx.x] < 0){
+// 			lut[threadIdx.x] = 0;
+// 		} 
+	
+//  	/* Get the result image */
+//  	if(lut[img_in[i]] > 255){
+//  		img_out[i] = 255;
+//  	}
+//  	else{
+//  		img_out[i] = (unsigned char)lut[img_in[i]];
+//  	}
+// 	__syncthreads();
+// }
 
-	// Parallel scan 
-	if(threadIdx.x < nbr_bin){
-		cdf[threadIdx.x] = hist_in[threadIdx.x];
-		int stride,temp;
-		for(stride = 1; stride < blockIdx.x; stride *= 2){
-			__syncthreads();
-			temp=0;
-			if (stride <= threadIdx.x)
-				temp = cdf[threadIdx.x - stride];
-			__syncthreads();
-			cdf[threadIdx.x] += temp;
-		}
 
+// --------------------WORKING CODE---------------------//
+ 
+__global__ void histogram_prefixsum(int * hist_in,int * cdf,int nbr_bin,int img_size){
+	__shared__ int partialScan[BIN_SIZE];
+	int i = threadIdx.x + blockIdx.x * blockDim.x;
+	// if(i >= img_size)
+	// 	return;
+	//// Major unoptimised code	
+	if(i < nbr_bin)
+		partialScan[threadIdx.x] = hist_in[threadIdx.x];
+	
+	for(int stride = 1; stride < blockDim.x; stride *= 2){
 		__syncthreads();
-		if(stride <= threadIdx.x)
-			cdf[threadIdx.x] += temp;
 
-		__syncthreads();	
-		lut[threadIdx.x] = (int)(((float) cdf[threadIdx.x] - min)*255/d + 0.5);
-		if(lut[threadIdx.x] < 0){
-			lut[threadIdx.x] = 0;
+		if(threadIdx.x >= stride){
+			partialScan[threadIdx.x] += partialScan[threadIdx.x - stride];
 		}
 	}
 	__syncthreads();
-	/* Get the result image */
 
+	// for(int k=0; k<nbr_bin; k++){
+		cdf[i] = partialScan[i];
+	// }	
+
+}
+
+__global__ void histogram_calcdf(int * cdf,int * lut ,int img_size){
+	int min = cdf[0];
+	int d = img_size - min;
+	lut[threadIdx.x] = (int)(((float)cdf[threadIdx.x] - min)*255/d + 0.5);
+    if(lut[threadIdx.x] < 0)
+        lut[threadIdx.x] = 0;
+    
+	return ;
+}
+
+__global__ void histogram_equalization(unsigned char * img_out, unsigned char * img_in, 
+							int * lut, int img_size, int nbr_bin)
+{	
+	int i = threadIdx.x + blockIdx.x * blockDim.x;
 	if(lut[img_in[i]] > 255){
 		img_out[i] = 255;
 	}
@@ -101,4 +154,5 @@ __global__ void histogram_equalization(unsigned char * img_out, unsigned char * 
 		img_out[i] = (unsigned char)lut[img_in[i]];
 	}
 
+	__syncthreads();
 }
