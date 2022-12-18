@@ -1,11 +1,10 @@
 OPTFLAGS = -g -Xcompiler -O3
 
-CFLAGS = $(OPTFLAGS)
-
 NVCCFLAGS = $(OPTFLAGS) -G
 
+all: gpu cpu
 
-all: objects
+gpu: objects
 	nvcc hist.o contrast.o main.o -o gHist -L/usr/local/cuda/lib64 -lcudart -lcuda -lm
 
 cpu: 
@@ -26,6 +25,6 @@ diff: gHist hist
 planet:
 	./gHist ../Images/planet_surface.pgm planet_surface.gpu
 	./hist ../Images/planet_surface.pgm planet_surface.cpu
-
+	diff planet_surface.gpu planet_surface.cpu
 clean:
 	rm *.o

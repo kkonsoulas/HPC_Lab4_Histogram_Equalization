@@ -21,7 +21,7 @@
 void __global__ histogram(int * hist_out, unsigned char * img_in, int img_size, int nbr_bin);
 void __global__ histogram_equalization(unsigned char * img_out, unsigned char * img_in, 
                             int * hist_in, int img_size, int nbr_bin);
-void __global__ histogram_prefixsum(int * hist_in,int * cdf,int nbr_bin,int img_size,int TypeofAlgo);
+void __global__ histogram_prefixsum(int * hist_in,int * cdf,int nbr_bin,int img_size/*,int TypeofAlgo*/);
 void __global__ histogram_calcdf(int * cdf,int * lut , int img_size);
 
 

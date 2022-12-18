@@ -3,15 +3,13 @@
 #include <stdlib.h>
 #define GPU_CUDA_CODE
 #include "hist-equ.h"
-// #include <cuda.h>
 
 
 void run_cpu_gray_test(PGM_IMG img_in, char *out_filename);
 
 int main(int argc, char *argv[]){
     PGM_IMG img_ibuf_g;
-    // unsigned char* d_image;
-    // int* d_imageSize;
+
 
 	if (argc != 3) {
 		printf("Run with input file name and output file name as arguments\n");
@@ -62,9 +60,7 @@ PGM_IMG read_pgm(const char * path){
     fscanf(in_file, "%s", sbuf); /*Skip the magic number*/
     fscanf(in_file, "%d",&result.w);
     fscanf(in_file, "%d",&result.h);
-	// cudaMalloc(d_imageSize, sizeof(int));
-    // *d_imageSize = result.w * result.h; 
-    // cudaMalloc(d_image, result.w * result.h * sizeof(unsigned char));
+
     fscanf(in_file, "%d\n",&v_max);
     printf("Image size: %d x %d\n", result.w, result.h);
     
