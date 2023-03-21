@@ -23,8 +23,8 @@ diff: gHist hist
 	diff cuth.out guth.out
 
 planet:
-	./gHist ../Images/planet_surface.pgm planet_surface.gpu
-	./hist ../Images/planet_surface.pgm planet_surface.cpu
+	./gHist Images/planet_surface.pgm planet_surface.gpu
+	./hist Images/planet_surface.pgm planet_surface.cpu
 	diff planet_surface.gpu planet_surface.cpu
 clean:
 	rm *.o

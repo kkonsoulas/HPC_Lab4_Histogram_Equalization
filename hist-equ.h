@@ -3,7 +3,7 @@
 
 #ifdef GPU_CUDA_CODE
 #include <cuda.h>
-
+#define _TILLING_
 
 #define cudaCheckError() {                                          \
  cudaError_t e=cudaGetLastError();                                 \
@@ -13,9 +13,9 @@
  }                                                                 \
 }
 #define BLOCK_SIZE 1024
-#define CONSTANT_MEMORY_SIZE (8388608 )
+#define CONSTANT_MEMORY_SIZE (20971520 )
 // #define CONSTANT_MEMORY_GRID (CONSTANT_MEMORY_SIZE / BLOCK_SIZE)
-#define CONSTANT_MEMORY_GRID (8192)
+#define CONSTANT_MEMORY_GRID (20480)
 
 
 void __global__ histogram(int * hist_out, unsigned char * img_in, int img_size, int nbr_bin);
